@@ -2,7 +2,11 @@
 const headerId = 'restart';
 const restartId = 'restart';
 
+// file name to log spawned process output to, or null to disable logging
+const logFile = null;
+
 const cp = nw.require('child_process');
+const fs = nw.require('fs');
 
 function getScriptsDir() {
     for(const mod of window.activeMods) {
@@ -24,7 +28,20 @@ function getRestartProcessCmd() {
             //     cp.spawn(file, [], {shell:true, detached:true, windowsHide:true})
             // github issue that may be relavent: https://github.com/nodejs/node/issues/21825
             // instead I am using `start /B` as a workaround to get a hidden detached process
-            return 'start /B ' + dir.replace(/\//g, '\\') + 'windows.bat';
+            return {
+                shell: true,
+                detached: false,
+                file: 'start',
+                args: ['/B', dir.replace(/\//g, '\\') + 'windows.bat']
+            };
+        case 'linux':
+        case 'darwin':
+            return {
+                shell: false,
+                detached: true,
+                file: dir + 'unix.sh',
+                args: [],
+            };
         default:
             console.error('Restarting the process is not supported for \''+process.platform+'\' systems yet.');
             return null;
@@ -52,7 +69,16 @@ function initialize() {
     // listen for key press
     simplify.registerUpdate(() => {
         if(ig.input.state(restartId)) {
-            cp.exec(cmd).unref();
+            const options = {
+                shell: cmd.shell,
+                stdio: 'ignore',
+                detached: cmd.detached
+            };
+            if(logFile) {
+                const log = fs.openSync(logFile, 'w');
+                options.stdio = ['ignore', log, log];
+            }
+            cp.spawn(cmd.file, cmd.args, options).unref();
             nw.App.quit();
         }
     });
