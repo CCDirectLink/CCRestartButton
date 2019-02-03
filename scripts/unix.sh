@@ -7,6 +7,7 @@ do
     # if CrossCode is not running start it
     if ! pgrep -x "CrossCode"
     then
-        CrossCode
+        ./CrossCode &
+        break
     fi
 done
