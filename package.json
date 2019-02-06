@@ -1,6 +1,6 @@
 {
     "name": "Restart Button",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Adds a button to restart the game without memory leaks",
     "main": "mod.js",
     "module": true,

@@ -35,11 +35,10 @@ function getRestartProcessCmd() {
                 args: ['/B', dir.replace(/\//g, '\\') + 'windows.bat']
             };
         case 'linux':
-        case 'darwin':
             return {
                 shell: false,
                 detached: true,
-                file: dir + 'unix.sh',
+                file: dir + 'linux.sh',
                 args: [],
             };
         default:
