@@ -39,7 +39,16 @@ function getRestartProcessCmd() {
                 shell: false,
                 detached: true,
                 file: dir + 'linux.sh',
-                args: [],
+                args: []
+            };
+        case 'darwin':
+            // I am still confused how this works without detaching,
+            // but I will leave it as is until this does not work for someone
+            return {
+                shell: false,
+                detached: false,
+                file: dir + 'macos.sh',
+                args: []
             };
         default:
             console.error('Restarting the process is not supported for \''+process.platform+'\' systems yet.');
