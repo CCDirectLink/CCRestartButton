@@ -8,19 +8,38 @@ const logFile = null;
 const cp = nw.require('child_process');
 const fs = nw.require('fs');
 
+function dependenciesLoaded() {
+    // localization
+    ig.lang.labels.sc.gui.options.controls.keys[restartId] = 'Restart';
+    ig.lang.labels.sc.gui.options.headers[headerId] = 'restart';
+
+    // add option
+    const tab = 5;
+    const defaultKey = 'L'.charCodeAt(0);
+    const defaultKeys = {key1: defaultKey, key2: undefined};
+    simplify.options.addEntry('keys-'+restartId, 'CONTROLS', defaultKeys, tab, undefined, undefined, headerId);
+    ig.input.bind(defaultKey, restartId); // have to manually bind default keys
+    simplify.options.reload(); // apply changes
+
+    // listen for key press
+    simplify.registerUpdate(() => {
+        if(ig.input.state(restartId)) {
+            restart();
+        }
+    });
+}
+
 function getScriptsDir() {
     for(const mod of window.activeMods) {
         if(mod.name === 'Restart Button') {
             return mod.baseDirectory + 'scripts/';
         }
     }
-    console.error('Failed to find Restart Button mod, did the name change?');
-    return null;
+    throw new Error('Failed to find Restart Button mod, did the name change?');
 }
 
 function getRestartProcessCmd() {
     const dir = getScriptsDir();
-    if(dir === null) return null;
 
     switch(process.platform) {
         case 'win32':
@@ -51,45 +70,38 @@ function getRestartProcessCmd() {
                 args: []
             };
         default:
-            console.error('Restarting the process is not supported for \''+process.platform+'\' systems yet.');
-            return null;
+            throw new Error('Restarting the process is not supported for \''+process.platform+'\' systems yet.');
     }
 }
 
-function initialize() {
-    const cmd = getRestartProcessCmd();
-    if(cmd === null) return;
+const cmd = getRestartProcessCmd();
 
-    // localization
-    ig.lang.labels.sc.gui.options.controls.keys[restartId] = 'Restart';
-    ig.lang.labels.sc.gui.options.headers[headerId] = 'restart';
-
-    // add option
-    const tab = 5;
-    const defaultKey = 'L'.charCodeAt(0);
-    const defaultKeys = {key1: defaultKey, key2: undefined};
-    simplify.options.addEntry('keys-'+restartId, 'CONTROLS', defaultKeys, tab, undefined, undefined, headerId);
-    ig.input.bind(defaultKey, restartId); // have to manually bind default keys
-
-    // reload options
-    simplify.options.reload();
-
-    // listen for key press
-    simplify.registerUpdate(() => {
-        if(ig.input.state(restartId)) {
-            const options = {
-                shell: cmd.shell,
-                stdio: 'ignore',
-                detached: cmd.detached
-            };
-            if(logFile) {
-                const log = fs.openSync(logFile, 'w');
-                options.stdio = ['ignore', log, log];
-            }
-            cp.spawn(cmd.file, cmd.args, options).unref();
-            nw.App.quit();
-        }
-    });
+const listeners = [];
+function addListener(listener) {
+    listeners.push(listener);
 }
 
-document.body.addEventListener('modsLoaded', initialize);
+function restart(skipListeners = false) {
+    if(!skipListeners) {
+        for(const listener of listeners) {
+            listener();
+        }
+    }
+    const options = {
+        shell: cmd.shell,
+        stdio: 'ignore',
+        detached: cmd.detached
+    };
+    if(logFile) {
+        const log = fs.openSync(logFile, 'w');
+        options.stdio = ['ignore', log, log];
+    }
+    cp.spawn(cmd.file, cmd.args, options).unref();
+    nw.App.quit();
+}
+
+// public api
+window.restartButton = {addListener, restart};
+
+// wait for dependencies to load
+document.body.addEventListener('modsLoaded', dependenciesLoaded);
