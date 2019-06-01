@@ -5,8 +5,8 @@ const restartId = 'restart';
 // file name to log spawned process output to, or null to disable logging
 const logFile = null;
 
-const cp = nw.require('child_process');
-const fs = nw.require('fs');
+const cp = require('child_process');
+const fs = require('fs');
 
 function dependenciesLoaded() {
     // localization
