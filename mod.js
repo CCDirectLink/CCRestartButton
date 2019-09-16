@@ -97,7 +97,7 @@ function restart(skipListeners = false) {
         options.stdio = ['ignore', log, log];
     }
     cp.spawn(cmd.file, cmd.args, options).unref();
-    nw.App.quit();
+    window.parent.nw.App.quit();
 }
 
 // public api
