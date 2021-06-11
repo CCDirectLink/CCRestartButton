@@ -2,43 +2,55 @@
 const headerId = 'restart';
 const restartId = 'restart';
 
-function dependenciesLoaded() {
-    // localization
-    ig.lang.labels.sc.gui.options.controls.keys[restartId] = 'Restart';
-    ig.lang.labels.sc.gui.options.headers[headerId] = 'restart';
+export default class RestartButtonMod {
+    constructor() {
+        this.listeners = [];
 
-    // add option
-    const tab = 5;
-    const defaultKey = 'L'.charCodeAt(0);
-    const defaultKeys = {key1: defaultKey, key2: undefined};
-    simplify.options.addEntry('keys-'+restartId, 'CONTROLS', defaultKeys, tab, undefined, undefined, headerId);
-    ig.input.bind(defaultKey, restartId); // have to manually bind default keys
-    simplify.options.reload(); // apply changes
+        window.restartButton = {
+            restart: this.restart.bind(this),
+            addListener: this.addListener.bind(this)
+        };
+    }
 
-    // listen for key press
-    simplify.registerUpdate(() => {
-        if(ig.input.state(restartId)) {
-            restart();
-        }
-    });
-}
+    prestart() {
+        sc.OPTIONS_DEFINITION['keys-'+restartId] = {
+            type: 'CONTROLS',
+            init: { key1: ig.KEY.L },
+            cat: sc.OPTION_CATEGORY.CONTROLS,
+            hasDivider: true,
+            header: headerId
+        };
+    }
 
-const listeners = [];
-function addListener(listener) {
-    listeners.push(listener);
-}
+    // Legacy compatibility
+    main() {
+        this.poststart();
+    }
 
-function restart(skipListeners = false) {
-    if(!skipListeners) {
-        for(const listener of listeners) {
-            listener();
+    poststart() {
+        // localization
+        ig.lang.labels.sc.gui.options.controls.keys[restartId] = 'Restart';
+        ig.lang.labels.sc.gui.options.headers[headerId] = 'restart';
+
+        ig.game.addons.preUpdate.push(this);
+    }
+
+    onPreUpdate() {
+        if(ig.input.pressed(restartId)) {
+            this.restart();
         }
     }
-    chrome.runtime.reload();
+
+    addListener(listener) {
+        this.listeners.push(listener);
+    }
+
+    restart(skipListeners = false) {
+        if(!skipListeners) {
+            for(const listener of this.listeners) {
+                listener();
+            }
+        }
+        chrome.runtime.reload();
+    }
 }
-
-// public api
-window.restartButton = {addListener, restart};
-
-// wait for dependencies to load
-document.body.addEventListener('modsLoaded', dependenciesLoaded);
