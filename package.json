@@ -4,9 +4,6 @@
     "description": "Adds a button to restart the game without memory leaks",
     "license": "MIT",
     "homepage": "https://github.com/bluecheetah001/CCRestartButton",
-    "main": "mod.js",
-    "module": true,
-    "ccmodDependencies": {
-        "Simplify": "^2.2.0"
-    }
+    "plugin": "mod.js",
+    "module": true
 }
