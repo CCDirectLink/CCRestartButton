@@ -51,6 +51,10 @@ export default class RestartButtonMod {
                 listener();
             }
         }
-        chrome.runtime.reload();
+        if (typeof chrome !== 'undefined') {
+            chrome.runtime.reload();
+        } else {
+            window.location.reload();
+        }
     }
 }
